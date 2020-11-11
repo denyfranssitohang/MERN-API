@@ -48,11 +48,25 @@ exports.createBlogPost = (req, res, next) => {
 }
 
 exports.getAllBlogPost = (req, res, next) => {
+    const currentPage = req.query.page || 1;
+    const perPage = req.query.perPage || 6;
+    let totalItems;
+
     BlogPost.find()
+    .countDocuments()
+    .then(count => {
+        totalItems = count;
+        return BlogPost.find()
+        .skip((parseInt(currentPage) - 1) * parseInt(perPage))
+        .limit(parseInt(perPage));
+    })
     .then(result => {
         res.status(200).json({
             message: 'Data BlogPost Berhasil Dipanggil',
-            data: result
+            data: result,
+            total_data: totalItems,
+            per_page: parseInt(perPage),
+            current_page: parseInt(currentPage),
         })
     })
     .catch(err => {
@@ -92,12 +106,6 @@ exports.updateBlogPost = (req, res, next) => {
     if(!req.file) {
         const err = new Error('Image Harus Diupload');
         err.errorStatus = 422;
-        throw err;
-    }
-
-    if(!req.postId){
-        const err = new Error ('Id tidak ditemukan!')
-        err.errorStatus = 404;
         throw err;
     }
 
